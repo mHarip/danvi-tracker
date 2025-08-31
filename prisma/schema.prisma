@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Feeding {
+  id        Int      @id @default(autoincrement())
+  type      String
+  amount    Float?
+  startTime DateTime
+  endTime   DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Diaper {
+  id        Int      @id @default(autoincrement())
+  type      String
+  time      DateTime
+  createdAt DateTime @default(now())
+}
+
+model Sleep {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Belt {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime?
+  createdAt DateTime @default(now())
+}

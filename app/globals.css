@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: system-ui, sans-serif;
+}
+
+a {
+    @apply text-white hover:underline;
+}
+
+nav a {
+    @apply font-medium;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+    cursor: pointer;
+    padding-right: 0.5rem;
+}
