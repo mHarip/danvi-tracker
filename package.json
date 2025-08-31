@@ -1,12 +1,12 @@
 {
-  "name": "baby-tracker",
+  "name": "danvi-tracker",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "prisma": "prisma"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
