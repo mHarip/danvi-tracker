@@ -1,20 +1,28 @@
-import {NextResponse} from "next/server";
-import {prisma} from "@/lib/prisma";
+import {PrismaClient} from "@prisma/client";
 
-export async function DELETE(request, {params}) {
-    try {
-        const {id} = params;
+const prisma = new PrismaClient();
 
-        await prisma.Diaper.delete({
-            where: {id: parseInt(id, 10)}
-        });
+export async function PUT(req, {params}) {
+    const id = parseInt(params.id);
+    const data = await req.json();
+    const updated = await prisma.diaper.update({
+        where: {id},
+        data: {
+            type: data.type,
+            time: data.time ? new Date(data.time) : null,
+        },
+    });
+    return Response.json(updated);
+}
 
-        return NextResponse.json({success: true}, {status: 200});
-    } catch (error) {
-        console.error(`Error deleting Diaper with id ${params?.id}:`, error);
-        return NextResponse.json(
-            {error: "Failed to delete Diaper"},
-            {status: 500}
-        );
-    }
+export async function DELETE(req, {params}) {
+    const id = parseInt(params.id);
+    await prisma.diaper.delete({where: {id}});
+    return Response.json({success: true});
+}
+
+export async function GET(req, {params}) {
+    const id = parseInt(params.id);
+    const record = await prisma.diaper.findUnique({where: {id}});
+    return Response.json(record);
 }

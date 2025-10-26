@@ -127,8 +127,8 @@ export default function ReportsPage() {
                         x: new Date(d[key]),
                         y: d.amount ? d.amount : 1
                     })),
-                    borderColor: "#0d6efd", // Bootstrap primary blue
-                    backgroundColor: "rgba(13,110,253,0.6)",
+                    borderColor: "#DA363B", // Retro Rainbow red
+                    backgroundColor: "rgba(218,54,59,0.6)",
                 },
             ],
         };
@@ -154,8 +154,8 @@ export default function ReportsPage() {
                             y: (end - start) / (1000 * 60 * 60)
                         };
                     }),
-                    borderColor: "#20c997", // Bootstrap teal
-                    backgroundColor: "rgba(32,201,151,0.6)",
+                    borderColor: "#4A7638", // Retro Rainbow green
+                    backgroundColor: "rgba(74,118,56,0.6)",
                 },
             ],
         };
@@ -166,7 +166,8 @@ export default function ReportsPage() {
         plugins: {
             legend: {
                 labels: {
-                    color: "#e5e7eb", // light gray for dark theme
+                    color: "#012a52", // match site text/nav color
+                    font: { weight: "bold" }
                 }
             }
         },
@@ -181,10 +182,10 @@ export default function ReportsPage() {
                 },
                 position: "bottom",
                 ticks: {
-                    color: "#e5e7eb",
+                    color: "#012a52",
                 },
                 grid: {
-                    color: "rgba(255,255,255,0.1)",
+                    color: "rgba(1,42,82,0.1)",
                 }
             },
             xTime: {
@@ -200,15 +201,15 @@ export default function ReportsPage() {
                     drawOnChartArea: false,
                 },
                 ticks: {
-                    color: "#e5e7eb",
+                    color: "#012a52",
                 }
             },
             y: {
                 ticks: {
-                    color: "#e5e7eb",
+                    color: "#012a52",
                 },
                 grid: {
-                    color: "rgba(255,255,255,0.1)",
+                    color: "rgba(1,42,82,0.1)",
                 }
             }
         },

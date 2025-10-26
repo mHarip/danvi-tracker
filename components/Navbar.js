@@ -6,43 +6,12 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
-    /* const [theme, setTheme] = useState(() => {
-        if (typeof window !== "undefined") {
-            return localStorage.getItem("theme") || "dark";
-        }
-        return "dark";
-    });
 
-    useEffect(() => {
-        if (theme === "auto") {
-            document.body.removeAttribute("data-bs-theme");
-        } else {
-            document.body.dataset.bsTheme = theme;
-        }
-        localStorage.setItem("theme", theme); // save choice
-    }, [theme]); */
 
     const [theme, setTheme] = useState("dark");
     const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
 
-    useEffect(() => {
-        setMounted(true);
-        const savedTheme = localStorage.getItem("theme");
-        if (savedTheme) {
-            setTheme(savedTheme);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!mounted) return;
-        if (theme === "auto") {
-            document.body.removeAttribute("data-bs-theme");
-        } else {
-            document.body.dataset.bsTheme = theme;
-        }
-        localStorage.setItem("theme", theme);
-    }, [theme, mounted]);
 
     return (
         <nav className="navbar navbar-expand-lg custom-navbar sticky-top shadow">
@@ -94,19 +63,6 @@ export default function Navbar() {
                                 </Link>
                             </li>
                         </ul>
-                        <div className="form-check form-switch text-light">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                role="switch"
-                                id="themeSwitch"
-                                checked={theme === "dark"}
-                                onChange={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            />
-                            <label className="form-check-label" htmlFor="themeSwitch">
-                                {mounted && (theme === "dark" ? "🌙" : "☀️")}
-                            </label>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -16,54 +16,53 @@ export default function RootLayout({children}) {
         <html lang="en">
         <body>
         <BootstrapClient/>
-        <ThemeProvider>
-            <Navbar/>
 
-            <div className="container-fluid">
-                <div className="row">
-                    <main className="col-md ms-sm-auto col-lg px-md-4 py-4">
-                        {children}
-                    </main>
-                </div>
+        <Navbar/>
+
+        <div className="container-fluid">
+            <div className="row">
+                <main className="col-md ms-sm-auto col-lg px-md-4 py-4">
+                    {children}
+                </main>
             </div>
+        </div>
 
-            {/* Quick Add button */}
-            <div className="dropdown position-fixed bottom-0 end-0 m-4">
-                <button
-                    className="btn btn-success dropdown-toggle"
-                    type="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                >
-                    ➕ Quick Add
-                </button>
-                <ul className="dropdown-menu">
-                    <li>
-                        <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalFeeding">
-                            Add Feeding
-                        </a>
-                    </li>
-                    <li>
-                        <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalDiaper">
-                            Add Diaper
-                        </a>
-                    </li>
-                    <li>
-                        <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalSleep">
-                            Add Sleep
-                        </a>
-                    </li>
-                    <li>
-                        <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalBelt">
-                            Add Belt
-                        </a>
-                    </li>
-                </ul>
-            </div>
+        {/* Quick Add button */}
+        <div className="dropdown position-fixed bottom-0 end-0 m-4">
+            <button
+                className="btn btn--quick-add dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+            >
+                + Quick Add
+            </button>
+            <ul className="dropdown-menu">
+                <li>
+                    <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalFeeding">
+                        Add Feeding
+                    </a>
+                </li>
+                <li>
+                    <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalDiaper">
+                        Add Diaper
+                    </a>
+                </li>
+                <li>
+                    <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalSleep">
+                        Add Sleep
+                    </a>
+                </li>
+                <li>
+                    <a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalBelt">
+                        Add Belt
+                    </a>
+                </li>
+            </ul>
+        </div>
 
-            {/* Mount modals here */}
-            <QuickAddModals/>
-        </ThemeProvider>
+        {/* Mount modals here */}
+        <QuickAddModals/>
         </body>
         </html>
     );

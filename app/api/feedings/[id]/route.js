@@ -1,20 +1,32 @@
-import {NextResponse} from "next/server";
-import {prisma} from "@/lib/prisma";
+import {PrismaClient} from "@prisma/client";
 
-export async function DELETE(request, {params}) {
-    try {
-        const {id} = await params;
+const prisma = new PrismaClient();
 
-        await prisma.Feeding.delete({
-            where: {id: parseInt(id, 10)}
-        });
+export async function PUT(req, {params}) {
+    const id = parseInt(params.id);
+    const data = await req.json();
 
-        return NextResponse.json({success: true}, {status: 200});
-    } catch (error) {
-        console.error("Error deleting feeding:", error);
-        return NextResponse.json(
-            {error: "Failed to delete feeding"},
-            {status: 500}
-        );
-    }
+    const updated = await prisma.feeding.update({
+        where: {id},
+        data: {
+            type: data.type,
+            amount: data.amount ? parseFloat(data.amount) : null,
+            side: data.side || null,
+            startTime: data.startTime ? new Date(data.startTime) : null,
+            endTime: data.endTime ? new Date(data.endTime) : null,
+        },
+    });
+    return Response.json(updated);
+}
+
+export async function DELETE(req, {params}) {
+    const id = parseInt(params.id);
+    await prisma.feeding.delete({where: {id}});
+    return Response.json({success: true});
+}
+
+export async function GET(req, {params}) {
+    const id = parseInt(params.id);
+    const record = await prisma.feeding.findUnique({where: {id}});
+    return Response.json(record);
 }

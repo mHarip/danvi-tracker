@@ -1,16 +1,28 @@
-import {NextResponse} from "next/server";
-import { prisma } from "@/lib/prisma";
+import {PrismaClient} from "@prisma/client";
 
-export async function DELETE(request, context) {
-    const {id} = await context.params;
+const prisma = new PrismaClient();
 
-    try {
-        await prisma.Belt.delete({
-            where: {id: parseInt(id, 10)}
-        });
-        return NextResponse.json({success: true}, {status: 200});
-    } catch (error) {
-        console.error("Error deleting belt record:", error);
-        return NextResponse.json({error: "Failed to delete belt record"}, {status: 500});
-    }
+export async function PUT(req, {params}) {
+    const id = parseInt(params.id);
+    const data = await req.json();
+    const updated = await prisma.belt.update({
+        where: {id},
+        data: {
+            startTime: data.startTime ? new Date(data.startTime) : null,
+            endTime: data.endTime ? new Date(data.endTime) : null,
+        },
+    });
+    return Response.json(updated);
+}
+
+export async function DELETE(req, {params}) {
+    const id = parseInt(params.id);
+    await prisma.belt.delete({where: {id}});
+    return Response.json({success: true});
+}
+
+export async function GET(req, {params}) {
+    const id = parseInt(params.id);
+    const record = await prisma.belt.findUnique({where: {id}});
+    return Response.json(record);
 }

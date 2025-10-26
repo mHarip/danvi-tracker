@@ -8,12 +8,13 @@ datasource db {
 }
 
 model Feeding {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   type      String
   amount    Float?
   startTime DateTime
   endTime   DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  side      String?
 }
 
 model Diaper {
@@ -24,15 +25,15 @@ model Diaper {
 }
 
 model Sleep {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   startTime DateTime
   endTime   DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model Belt {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   startTime DateTime
   endTime   DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
