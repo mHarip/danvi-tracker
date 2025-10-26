@@ -1,10 +1,15 @@
-import {PrismaClient} from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET() {
-    const belt = await prisma.belt.findMany({orderBy: {createdAt: "desc"}});
-    return Response.json(belt);
+    try {
+        const belt = await prisma.belt.findMany({
+            orderBy: { createdAt: "desc" },
+        });
+        return Response.json(belt);
+    } catch (err) {
+        console.error("Belt fetch error:", err);
+        return Response.json([], { status: 200 }); // return empty array instead of error object
+    }
 }
 
 export async function POST(req) {

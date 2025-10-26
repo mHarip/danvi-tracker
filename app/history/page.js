@@ -1,386 +1,302 @@
 "use client";
-import {useEffect, useState} from "react";
+import {useState, useEffect} from "react";
+import EditModal from "../../components/EditModal";
+import React from "react";
 
 export default function HistoryPage() {
-    const [records, setRecords] = useState({
-        feedings: [],
-        diapers: [],
-        sleep: [],
-        belt: [],
-    });
+    const [feedings, setFeedings] = useState([]);
+    const [diapers, setDiapers] = useState([]);
+    const [sleep, setSleep] = useState([]);
+    const [belt, setBelt] = useState([]);
 
     const [filter, setFilter] = useState("ALL");
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [showEdit, setShowEdit] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
+    const [selectedType, setSelectedType] = useState(null);
 
-    const [editRecord, setEditRecord] = useState(null);
-    const [editType, setEditType] = useState("");
-    const [showModal, setShowModal] = useState(false);
+    // Fetch all data
+    const fetchAll = async () => {
+        const [f1, f2, f3, f4] = await Promise.allSettled([
+            fetch("/api/feedings"),
+            fetch("/api/diapers"),
+            fetch("/api/sleep"),
+            fetch("/api/belt"),
+        ]);
 
-    // ✅ fetch all
+        const getJson = async (r) => (r.status === "fulfilled" ? await r.value.json() : []);
+        setFeedings(await getJson(f1));
+        setDiapers(await getJson(f2));
+        setSleep(await getJson(f3));
+        setBelt(await getJson(f4));
+    };
+
     useEffect(() => {
-        const endpoints = ["feedings", "diapers", "sleep", "belt"];
-        endpoints.forEach((type) => {
-            fetch(`/api/${type}`)
-                .then((res) => res.json())
-                .then((data) =>
-                    setRecords((r) => ({...r, [type]: data}))
-                );
-        });
+        fetchAll();
     }, []);
 
-    const refreshType = async (type) => {
-        const res = await fetch(`/api/${type}`);
-        const data = await res.json();
-        setRecords((r) => ({...r, [type]: data}));
-    };
-
-    const handleDelete = async (type, id) => {
-        if (!confirm("Delete this record?")) return;
-        await fetch(`/api/${type}/${id}`, {method: "DELETE"});
-        refreshType(type);
-    };
-
-    const handleEditClick = (type, record) => {
-        setEditType(type);
-        setEditRecord({...record});
-        setShowModal(true);
-    };
-
-    const handleEditChange = (key, value) => {
-        setEditRecord((prev) => ({...prev, [key]: value}));
-    };
-
-    const handleSave = async () => {
-        if (!editRecord || !editType) return;
-        const id = editRecord.id;
-        const body = {...editRecord};
-        delete body.id;
-
-        // ✅ Fix for feedings: mutually exclusive fields
-        if (editType === "feedings") {
-            if (body.type === "breast") {
-                body.amount = null;
-            } else {
-                body.side = null;
+    // 🔍 Filter records by timeframe
+    const filterByDate = (data, key = "startTime") => {
+        const now = new Date();
+        return data.filter((item) => {
+            const d = new Date(item[key]);
+            const compareDate = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+            switch (filter) {
+                case "1D":
+                    return d.toDateString() === now.toDateString();
+                case "1W":
+                    return d >= compareDate(7);
+                case "1M":
+                    return d >= new Date(now.setMonth(now.getMonth() - 1));
+                case "3M":
+                    return d >= new Date(now.setMonth(now.getMonth() - 3));
+                default:
+                    return true;
             }
-        }
+        });
+    };
 
-        await fetch(`/api/${editType}/${id}`, {
+    const filtered = {
+        feedings: filterByDate(feedings),
+        diapers: filterByDate(diapers, "time"),
+        sleep: filterByDate(sleep),
+        belt: filterByDate(belt),
+    };
+
+    // Group by date
+    const groupedByDate = (data, key = "startTime") =>
+        data.reduce((acc, item) => {
+            const date = new Date(item[key] || item.createdAt).toDateString();
+            if (!acc[date]) acc[date] = [];
+            acc[date].push(item);
+            return acc;
+        }, {});
+
+    // ✅ Handle edit modal
+    const handleEdit = (record, typeKey) => {
+        setSelectedRecord({...record, _type: typeKey});
+        setSelectedType(typeKey);
+        setShowEdit(true);
+    };
+
+    // ✅ Save updated record
+    const handleSave = async (data) => {
+        if (!selectedRecord || !selectedType) return;
+
+        const endpoint = `/api/${selectedType}/${selectedRecord.id}`;
+        const res = await fetch(endpoint, {
             method: "PUT",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(body),
+            body: JSON.stringify(data),
         });
 
-        setShowModal(false);
-        refreshType(editType);
+        if (res.ok) {
+            setShowEdit(false);
+            fetchAll();
+        }
     };
 
-    const tables = [
-        {
-            key: "feedings",
-            title: "Feedings",
-            columns: ["Type", "Amount / Side", "Start", "End"],
-            map: (f) => ({
-                id: f.id,
-                Type: f.type.charAt(0).toUpperCase() + f.type.slice(1),
-                "Amount / Side": f.side
-                    ? f.side.charAt(0).toUpperCase() + f.side.slice(1)
-                    : f.amount
-                        ? `${f.amount} oz`
-                        : "-",
-                Start: new Date(f.startTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-                End: f.endTime
-                    ? new Date(f.endTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    })
-                    : "-",
-            }),
-        },
-        {
-            key: "diapers",
-            title: "Diapers",
-            columns: ["Type", "Time"],
-            map: (d) => ({
-                id: d.id,
-                Type: d.type.charAt(0).toUpperCase() + d.type.slice(1),
-                Time: new Date(d.time).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-            }),
-        },
-        {
-            key: "sleep",
-            title: "Sleep",
-            columns: ["Start", "End"],
-            map: (s) => ({
-                id: s.id,
-                Start: new Date(s.startTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-                End: s.endTime
-                    ? new Date(s.endTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    })
-                    : "-",
-            }),
-        },
-        {
-            key: "belt",
-            title: "Belt",
-            columns: ["Start", "End"],
-            map: (b) => ({
-                id: b.id,
-                Start: new Date(b.startTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-                End: b.endTime
-                    ? new Date(b.endTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    })
-                    : "-",
-            }),
-        },
-    ];
+    // ✅ Delete record
+    const handleDelete = async (type, id) => {
+        const endpoint = `/api/${type}/${id}`;
+        const res = await fetch(endpoint, {method: "DELETE"});
+        if (res.ok) fetchAll();
+    };
+
+    const getDailyTotalOz = (records) =>
+        records
+            .filter((r) => ["pumped", "formula"].includes(r.type?.toLowerCase()) && r.amount)
+            .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0)
+            .toFixed(1);
+
+    // ✅ Render section card
+    const renderTable = (title, data, columns, typeKey = "feedings") => {
+        const grouped = groupedByDate(data);
+        const dates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+
+        return (
+            <div className="col-lg-6">
+                <div className="card mb-4 shadow-sm border-0">
+                    <div className="card-header d-flex justify-content-between align-items-center bg-light">
+                        <strong>{title}</strong>
+                        <div>
+                            {["1D", "1W", "1M", "3M", "YTD", "ALL"].map((opt) => (
+                                <button
+                                    key={opt}
+                                    className={`btn btn-sm me-1 ${
+                                        filter === opt ? "btn-primary" : "btn-outline-secondary"
+                                    }`}
+                                    onClick={() => setFilter(opt)}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="table-responsive">
+                        <table className="table table-striped align-middle">
+                            <thead>
+                            <tr>
+                                {columns.map((col) => (
+                                    <th key={col}>{col}</th>
+                                ))}
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {dates.length > 0 ? (
+                                dates.map((date) => {
+                                    const dayRecords = grouped[date];
+                                    const totalOz =
+                                        typeKey === "feedings" ? getDailyTotalOz(dayRecords) : null;
+
+                                    return (
+                                        <React.Fragment key={date}>
+                                            {/* ✅ Group Header */}
+                                            <tr className="table-secondary fw-bold">
+                                                <td colSpan={columns.length + 1}>
+                                                    {date}
+                                                    {typeKey === "feedings" && totalOz > 0 && (
+                                                        <span className="ms-2 fw-bold text-primary total-highlight float-end">TOTAL: {totalOz} OZ</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+
+                                            {dayRecords.map((item) => (
+                                                <tr key={item.id}>
+                                                    {/* Feedings */}
+                                                    {typeKey === "feedings" && (
+                                                        <>
+                                                            <td>{item.type}</td>
+                                                            <td>
+                                                                {item.type === "breast"
+                                                                    ? item.side || "-"
+                                                                    : item.amount
+                                                                        ? `${item.amount} oz`
+                                                                        : "-"}
+                                                            </td>
+                                                            <td>
+                                                                {item.startTime
+                                                                    ? new Date(item.startTime).toLocaleTimeString([], {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })
+                                                                    : "-"}
+                                                            </td>
+                                                            <td>
+                                                                {item.endTime
+                                                                    ? new Date(item.endTime).toLocaleTimeString([], {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })
+                                                                    : "-"}
+                                                            </td>
+                                                        </>
+                                                    )}
+
+                                                    {/* Diapers */}
+                                                    {typeKey === "diapers" && (
+                                                        <>
+                                                            <td>{item.type}</td>
+                                                            <td>
+                                                                {item.time
+                                                                    ? new Date(item.time).toLocaleTimeString([], {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })
+                                                                    : "-"}
+                                                            </td>
+                                                        </>
+                                                    )}
+
+                                                    {/* Sleep / Belt */}
+                                                    {(typeKey === "sleep" || typeKey === "belt") && (
+                                                        <>
+                                                            <td>
+                                                                {item.startTime
+                                                                    ? new Date(item.startTime).toLocaleTimeString([], {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })
+                                                                    : "-"}
+                                                            </td>
+                                                            <td>
+                                                                {item.endTime
+                                                                    ? new Date(item.endTime).toLocaleTimeString([], {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })
+                                                                    : "-"}
+                                                            </td>
+                                                        </>
+                                                    )}
+
+                                                    {/* Actions */}
+                                                    <td className="actions-dropdown">
+                                                        <div className="dropdown">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                                data-bs-toggle="dropdown"
+                                                            >
+                                                                Actions
+                                                            </button>
+                                                            <ul className="dropdown-menu">
+                                                                <li>
+                                                                    <button
+                                                                        className="dropdown-item"
+                                                                        onClick={() => handleEdit(item, typeKey)}
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                </li>
+                                                                <li>
+                                                                    <button
+                                                                        className="dropdown-item text-danger"
+                                                                        onClick={() => handleDelete(typeKey, item.id)}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={columns.length + 1} className="text-center text-muted">
+                                        No records found
+                                    </td>
+                                </tr>
+                            )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <main className="container">
+            <h1 className="mb-4 fw-bold">📜 Activity History</h1>
             <div className="row">
-                {tables.map((t) => (
-                    <div className="col-md-6" key={t.key}>
-                        <div className="card mb-4">
-                            <div className="card-header fw-bold d-flex justify-content-between align-items-center">
-                                {t.title}
-                            </div>
-                            <div className="card-body">
-                                <table className="table table-striped table-hover">
-                                    <thead>
-                                    <tr>
-                                        {t.columns.map((c, i) => (
-                                            <th key={i}>{c}</th>
-                                        ))}
-                                        <th>Actions</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {records[t.key].map((row) => {
-                                        const mapped = t.map(row);
-                                        return (
-                                            <tr key={row.id}>
-                                                {t.columns.map((col, j) => (
-                                                    <td key={j}>{mapped[col]}</td>
-                                                ))}
-                                                <td>
-                                                    <div className="dropdown">
-                                                        <button
-                                                            className="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                            type="button"
-                                                            data-bs-toggle="dropdown"
-                                                            aria-expanded="false"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <ul className="dropdown-menu">
-                                                            <li>
-                                                                <button
-                                                                    className="dropdown-item"
-                                                                    onClick={() => handleEditClick(t.key, row)}
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                            </li>
-                                                            <li>
-                                                                <button
-                                                                    className="dropdown-item text-danger"
-                                                                    onClick={() =>
-                                                                        handleDelete(t.key, row.id)
-                                                                    }
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                {renderTable("Feedings", filtered.feedings, ["Type", "Amount / Side", "Start", "End"], "feedings")}
+                {renderTable("Diapers", filtered.diapers, ["Type", "Time"], "diapers")}
+                {renderTable("Sleep", filtered.sleep, ["Start", "End"], "sleep")}
+                {renderTable("Belt", filtered.belt, ["Start", "End"], "belt")}
+
+                <EditModal
+                    show={showEdit}
+                    record={selectedRecord}
+                    type={selectedType}
+                    onClose={() => setShowEdit(false)}
+                    onSave={handleSave}
+                />
             </div>
-
-            {showModal && editRecord && (
-                <>
-                    <div
-                        className="modal fade show"
-                        style={{display: "block"}}
-                        tabIndex="-1"
-                    >
-                        <div className="modal-dialog modal-lg modal-dialog-centered">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <h5 className="modal-title">Edit {editType}</h5>
-                                    <button
-                                        type="button"
-                                        className="btn-close"
-                                        onClick={() => setShowModal(false)}
-                                    ></button>
-                                </div>
-                                <div className="modal-body">
-                                    {editType === "feedings" && (
-                                        <>
-                                            <label className="form-label fw-bold">Type</label>
-                                            <select
-                                                className="form-select mb-2"
-                                                value={editRecord.type || ""}
-                                                onChange={(e) => handleEditChange("type", e.target.value)}
-                                            >
-                                                <option value="breast">Breast</option>
-                                                <option value="pumped">Pumped</option>
-                                                <option value="formula">Formula</option>
-                                            </select>
-
-                                            {editRecord.type === "breast" ? (
-                                                <>
-                                                    <label className="form-label fw-bold">Side</label>
-                                                    <select
-                                                        className="form-select mb-2"
-                                                        value={editRecord.side || ""}
-                                                        onChange={(e) => handleEditChange("side", e.target.value)}
-                                                    >
-                                                        <option value="">Select side</option>
-                                                        <option value="left">Left</option>
-                                                        <option value="right">Right</option>
-                                                    </select>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <label className="form-label fw-bold">Amount (oz)</label>
-                                                    <input
-                                                        type="number"
-                                                        className="form-control mb-2"
-                                                        value={editRecord.amount || ""}
-                                                        onChange={(e) => handleEditChange("amount", e.target.value)}
-                                                        placeholder="Enter amount in oz"
-                                                    />
-                                                </>
-                                            )}
-
-                                            <label className="form-label fw-bold">Start Time</label>
-                                            <input
-                                                type="datetime-local"
-                                                className="form-control mb-2"
-                                                value={
-                                                    editRecord.startTime
-                                                        ? new Date(editRecord.startTime).toISOString().slice(0, 16)
-                                                        : ""
-                                                }
-                                                onChange={(e) => handleEditChange("startTime", e.target.value)}
-                                            />
-
-                                            <label className="form-label fw-bold">End Time</label>
-                                            <input
-                                                type="datetime-local"
-                                                className="form-control mb-2"
-                                                value={
-                                                    editRecord.endTime
-                                                        ? new Date(editRecord.endTime).toISOString().slice(0, 16)
-                                                        : ""
-                                                }
-                                                onChange={(e) => handleEditChange("endTime", e.target.value)}
-                                            />
-                                        </>
-                                    )}
-
-                                    {editType === "diapers" && (
-                                        <>
-                                            <label className="form-label fw-bold">Type</label>
-                                            <select
-                                                className="form-select mb-2"
-                                                value={editRecord.type || ""}
-                                                onChange={(e) => handleEditChange("type", e.target.value)}
-                                            >
-                                                <option value="wet">Wet</option>
-                                                <option value="dirty">Dirty</option>
-                                                <option value="mixed">Mixed</option>
-                                            </select>
-
-                                            <label className="form-label fw-bold">Time</label>
-                                            <input
-                                                type="datetime-local"
-                                                className="form-control mb-2"
-                                                value={
-                                                    editRecord.time
-                                                        ? new Date(editRecord.time).toISOString().slice(0, 16)
-                                                        : ""
-                                                }
-                                                onChange={(e) => handleEditChange("time", e.target.value)}
-                                            />
-                                        </>
-                                    )}
-
-                                    {["sleep", "belt"].includes(editType) && (
-                                        <>
-                                            <label className="form-label fw-bold">Start Time</label>
-                                            <input
-                                                type="datetime-local"
-                                                className="form-control mb-2"
-                                                value={
-                                                    editRecord.startTime
-                                                        ? new Date(editRecord.startTime).toISOString().slice(0, 16)
-                                                        : ""
-                                                }
-                                                onChange={(e) => handleEditChange("startTime", e.target.value)}
-                                            />
-
-                                            <label className="form-label fw-bold">End Time</label>
-                                            <input
-                                                type="datetime-local"
-                                                className="form-control mb-2"
-                                                value={
-                                                    editRecord.endTime
-                                                        ? new Date(editRecord.endTime).toISOString().slice(0, 16)
-                                                        : ""
-                                                }
-                                                onChange={(e) => handleEditChange("endTime", e.target.value)}
-                                            />
-                                        </>
-                                    )}
-                                </div>
-
-                                <div className="modal-footer">
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={() => setShowModal(false)}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button className="btn btn-primary" onClick={handleSave}>
-                                        Save Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        className="modal-backdrop fade show"
-                        onClick={() => setShowModal(false)}
-                    ></div>
-                </>
-            )}
         </main>
     );
 }

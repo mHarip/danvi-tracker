@@ -4,6 +4,7 @@ import {useState, useEffect} from "react";
 export default function FeedingForm({onSave}) {
     const [type, setType] = useState("breast");
     const [amount, setAmount] = useState(""); // reused for both oz and side
+    const [side, setSide] = useState(""); // separate side state
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
     const [alertMessage, setAlertMessage] = useState("");
@@ -23,44 +24,52 @@ export default function FeedingForm({onSave}) {
 
         const payload = {
             type,
-            amount,
+            amount: type === "breast" ? null : amount,
+            side: type === "breast" ? side || null : null,
             startTime,
             endTime,
         };
 
-        const res = await fetch("/api/feedings", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload),
-        });
+        try {
+            const res = await fetch("/api/feedings", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload),
+            });
 
-        if (res.ok) {
-            const data = await res.json();
-            console.log("✅ Feeding saved:", data);
+            if (res.ok) {
+                const data = await res.json();
+                console.log("✅ Feeding saved:", data);
 
-            // Optional callback for parent
-            if (onSave) onSave(data);
+                // Optional callback for parent
+                if (onSave) onSave(data);
 
-            // Show success alert
-            setAlertMessage("Feeding saved successfully!");
+                // Show success alert
+                setAlertMessage("✅ Feeding saved successfully!");
 
-            // Reset only the amount field
-            setAmount("");
+                // Reset only the amount field
+                setAmount("");
+                setSide("");
 
-            // Reset to current time again
-            const now = new Date();
-            const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-                .toISOString()
-                .slice(0, 16);
-            setStartTime(localISO);
-            setEndTime(localISO);
+                // Reset to current time again
+                const now = new Date();
+                const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+                    .toISOString()
+                    .slice(0, 16);
+                setStartTime(localISO);
+                setEndTime(localISO);
 
-            // Hide alert automatically after 3 seconds
+                // Hide alert automatically after 3 seconds
+                setTimeout(() => setAlertMessage(""), 3000);
+            } else {
+                setAlertMessage("❌ Failed to save feeding. Try again.");
+                setTimeout(() => setAlertMessage(""), 3000);
+                console.error("❌ Failed to save feeding");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            setAlertMessage("❌ An unexpected error occurred.");
             setTimeout(() => setAlertMessage(""), 3000);
-        } else {
-            setAlertMessage("❌ Failed to save feeding. Try again.");
-            setTimeout(() => setAlertMessage(""), 3000);
-            console.error("❌ Failed to save feeding");
         }
     }
 
@@ -95,10 +104,11 @@ export default function FeedingForm({onSave}) {
                     <label className="form-label fw-bold">Side</label>
                     <select
                         className="form-select"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        value={side}
+                        onChange={(e) => setSide(e.target.value)}
                         required
                     >
+                        <option value="">Select side</option>
                         <option value="left">Left</option>
                         <option value="right">Right</option>
                     </select>

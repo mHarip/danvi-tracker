@@ -1,10 +1,15 @@
-import {PrismaClient} from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET() {
-    const sleep = await prisma.sleep.findMany({orderBy: {createdAt: "desc"}});
-    return Response.json(sleep);
+    try {
+        const sleep = await prisma.sleep.findMany({
+            orderBy: { createdAt: "desc" },
+        });
+        return Response.json(sleep);
+    } catch (err) {
+        console.error("Sleep fetch error:", err);
+        return Response.json([], { status: 200 });
+    }
 }
 
 export async function POST(req) {

@@ -1,10 +1,15 @@
-import {PrismaClient} from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET() {
-    const diapers = await prisma.diaper.findMany({orderBy: {createdAt: "desc"}});
-    return Response.json(diapers);
+    try {
+        const diapers = await prisma.diaper.findMany({
+            orderBy: { createdAt: "desc" },
+        });
+        return Response.json(diapers);
+    } catch (err) {
+        console.error("Diapers fetch error:", err);
+        return Response.json([], { status: 200 });
+    }
 }
 
 export async function POST(req) {
