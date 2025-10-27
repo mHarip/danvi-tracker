@@ -1,21 +1,21 @@
 @import "bootstrap/scss/functions";
 @import "bootstrap/scss/bootstrap";
 
-$primary: #012a52;
-$secondary: #00b2a9;
-$success: #a4d65e;
-$info: #5bc0de;
-$warning: #f0ad4e;
-$dark: #1a1a1a;
-$primary-text-emphasis: #004080;
-$dark-secondary: $secondary;
+// === Accessible Colors ===
+$primary: #003A6D;
+$secondary: #008C8C;
+$info: #1BA1E2;
+$success: #3C9A3C;
+$warning: #C98A00;
+$danger: #B23A48;
+$dark: #1A1A1A;
+$light: #F9FAFB;
+$text-muted: #505A6E;
+$primary-text-emphasis: #002B50;
 
-$border-radius: 0.5rem;
-$font-family-sans-serif: 'Inter', sans-serif;
-
-.primary-color {
-  color: $primary;
-}
+// Typography & Layout
+$font-family-sans-serif: 'Inter', 'Segoe UI', sans-serif;
+$border-radius: 0.6rem;
 
 .custom-navbar {
   background-color: $secondary;
@@ -265,10 +265,6 @@ canvas {
     font-weight: 600;
   }
 
-  .dropdown-item:hover {
-    background-color: #d7d8da !important;
-  }
-
   .dropdown-item.text-danger:hover {
     background-color: #dc3545 !important;
     color: #fff !important;
@@ -311,4 +307,64 @@ canvas {
   .filter-scroll {
     margin-top: 0.25rem;
   }
+}
+
+
+// --- Buttons ---
+.btn-primary {
+  background-color: $primary !important;
+  border-color: $primary !important;
+  color: #fff !important;
+  &:hover, &:focus {
+    background-color: darken($primary, 7%) !important;
+  }
+}
+
+.btn-secondary {
+  background-color: $secondary !important;
+  border-color: $secondary !important;
+  color: #fff !important;
+  &:hover {
+    background-color: darken($secondary, 8%) !important;
+  }
+}
+
+.alert-success {
+  background-color: rgba($success, 0.15);
+  color: darken($success, 25%);
+}
+
+.alert-danger {
+  background-color: rgba($danger, 0.15);
+  color: darken($danger, 20%);
+}
+
+// --- Navbar ---
+.custom-navbar {
+  background-color: $secondary;
+  color: #fff;
+  .nav-link {
+    color: #fff;
+    &.active { color: $warning; }
+    &:hover { color: $info; text-decoration: underline; }
+  }
+}
+
+// --- Cards & Tables ---
+.card {
+  background-color: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.8rem;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #EAF2F8 !important;
+}
+
+.total-highlight {
+  background: linear-gradient(90deg, #EAF2F8, #D6ECF5);
+  color: $primary;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 700;
 }
