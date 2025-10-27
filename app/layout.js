@@ -7,9 +7,9 @@ import QuickAddModals from "@/components/QuickAddModals";
 
 export const metadata = {
     title: "Danvi Tracker",
-    description: "Track baby feeding, sleep, and diapers.",
+    description: "Track baby feeding, sleep, diapers, and more.",
     icons: {
-        icon: "/favicon.png",
+        icon: "/favicon.ico",
         apple: "/favicon.png",
     },
 };
