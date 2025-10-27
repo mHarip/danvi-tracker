@@ -9,12 +9,17 @@ export default function HistoryPage() {
     const [sleep, setSleep] = useState([]);
     const [belt, setBelt] = useState([]);
 
-    const [filter, setFilter] = useState("ALL");
+    const [filters, setFilters] = useState({
+        feedings: "1D",
+        diapers: "1D",
+        sleep: "1D",
+        belt: "1D",
+    });
+
     const [showEdit, setShowEdit] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [selectedType, setSelectedType] = useState(null);
 
-    // Fetch all data
     const fetchAll = async () => {
         const [f1, f2, f3, f4] = await Promise.allSettled([
             fetch("/api/feedings"),
@@ -22,7 +27,6 @@ export default function HistoryPage() {
             fetch("/api/sleep"),
             fetch("/api/belt"),
         ]);
-
         const getJson = async (r) => (r.status === "fulfilled" ? await r.value.json() : []);
         setFeedings(await getJson(f1));
         setDiapers(await getJson(f2));
@@ -35,12 +39,12 @@ export default function HistoryPage() {
     }, []);
 
     // 🔍 Filter records by timeframe
-    const filterByDate = (data, key = "startTime") => {
+    const filterByDate = (data, filterValue, key = "startTime") => {
         const now = new Date();
         return data.filter((item) => {
             const d = new Date(item[key]);
             const compareDate = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-            switch (filter) {
+            switch (filterValue) {
                 case "1D":
                     return d.toDateString() === now.toDateString();
                 case "1W":
@@ -56,10 +60,10 @@ export default function HistoryPage() {
     };
 
     const filtered = {
-        feedings: filterByDate(feedings),
-        diapers: filterByDate(diapers, "time"),
-        sleep: filterByDate(sleep),
-        belt: filterByDate(belt),
+        feedings: filterByDate(feedings, filters.feedings),
+        diapers: filterByDate(diapers, filters.diapers, "time"),
+        sleep: filterByDate(sleep, filters.sleep),
+        belt: filterByDate(belt, filters.belt),
     };
 
     // Group by date
@@ -71,41 +75,31 @@ export default function HistoryPage() {
             return acc;
         }, {});
 
-    // ✅ Handle edit modal
-    const handleEdit = (record, typeKey) => {
-        setSelectedRecord({...record, _type: typeKey});
-        setSelectedType(typeKey);
-        setShowEdit(true);
-    };
-
-    // ✅ Save updated record
-    const handleSave = async (data) => {
-        if (!selectedRecord || !selectedType) return;
-
-        const endpoint = `/api/${selectedType}/${selectedRecord.id}`;
-        const res = await fetch(endpoint, {
-            method: "PUT",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(data),
-        });
-
-        if (res.ok) {
-            setShowEdit(false);
-            fetchAll();
-        }
-    };
-
-    // ✅ Delete record
-    const handleDelete = async (type, id) => {
-        const endpoint = `/api/${type}/${id}`;
-        const res = await fetch(endpoint, {method: "DELETE"});
-        if (res.ok) fetchAll();
-    };
-
+    // Calculations
     const getDailyTotalOz = (records) =>
         records
             .filter((r) => ["pumped", "formula"].includes(r.type?.toLowerCase()) && r.amount)
             .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0)
+            .toFixed(1);
+
+    const getDailyTotalDiapers = (records) => records.length;
+
+    const getDailyTotalSleep = (records) =>
+        records
+            .reduce(
+                (sum, r) =>
+                    sum + (new Date(r.endTime) - new Date(r.startTime)) / 3600000,
+                0
+            )
+            .toFixed(1);
+
+    const getDailyTotalBelt = (records) =>
+        records
+            .reduce(
+                (sum, r) =>
+                    sum + (new Date(r.endTime) - new Date(r.startTime)) / 3600000,
+                0
+            )
             .toFixed(1);
 
     // ✅ Render section card
@@ -116,16 +110,20 @@ export default function HistoryPage() {
         return (
             <div className="col-lg-6">
                 <div className="card mb-4 shadow-sm border-0">
-                    <div className="card-header d-flex justify-content-between align-items-center bg-light">
-                        <strong>{title}</strong>
-                        <div>
+                    <div className="card-header d-flex justify-content-between align-items-center flex-wrap">
+                        <strong className="fs-6 mb-0">{title}</strong>
+                        <div className="filter-scroll d-flex flex-nowrap gap-1 justify-content-end align-items-center">
                             {["1D", "1W", "1M", "3M", "YTD", "ALL"].map((opt) => (
                                 <button
                                     key={opt}
-                                    className={`btn btn-sm me-1 ${
-                                        filter === opt ? "btn-primary" : "btn-outline-secondary"
+                                    className={`btn btn-sm ${
+                                        filters[typeKey] === opt
+                                            ? "btn-primary"
+                                            : "btn-outline-secondary"
                                     }`}
-                                    onClick={() => setFilter(opt)}
+                                    onClick={() =>
+                                        setFilters({...filters, [typeKey]: opt})
+                                    }
                                 >
                                     {opt}
                                 </button>
@@ -147,17 +145,37 @@ export default function HistoryPage() {
                             {dates.length > 0 ? (
                                 dates.map((date) => {
                                     const dayRecords = grouped[date];
-                                    const totalOz =
-                                        typeKey === "feedings" ? getDailyTotalOz(dayRecords) : null;
+                                    let totalLabel = "";
+
+                                    if (typeKey === "feedings") {
+                                        const totalOz = getDailyTotalOz(dayRecords);
+                                        if (totalOz > 0)
+                                            totalLabel = `TOTAL: ${totalOz} OZ`;
+                                    } else if (typeKey === "diapers") {
+                                        totalLabel = `TOTAL: ${getDailyTotalDiapers(
+                                            dayRecords
+                                        )}`;
+                                    } else if (typeKey === "sleep") {
+                                        totalLabel = `TOTAL: ${getDailyTotalSleep(
+                                            dayRecords
+                                        )} HRS`;
+                                    } else if (typeKey === "belt") {
+                                        totalLabel = `TOTAL: ${getDailyTotalBelt(
+                                            dayRecords
+                                        )} HRS`;
+                                    }
 
                                     return (
                                         <React.Fragment key={date}>
-                                            {/* ✅ Group Header */}
+                                            {/* Group Header */}
                                             <tr className="table-secondary fw-bold">
                                                 <td colSpan={columns.length + 1}>
                                                     {date}
-                                                    {typeKey === "feedings" && totalOz > 0 && (
-                                                        <span className="ms-2 fw-bold text-primary total-highlight float-end">TOTAL: {totalOz} OZ</span>
+                                                    {totalLabel && (
+                                                        <span
+                                                            className="ms-2 fw-bold text-primary total-highlight float-end">
+                                                                {totalLabel}
+                                                            </span>
                                                     )}
                                                 </td>
                                             </tr>
@@ -167,28 +185,52 @@ export default function HistoryPage() {
                                                     {/* Feedings */}
                                                     {typeKey === "feedings" && (
                                                         <>
-                                                            <td>{item.type}</td>
+                                                            <td>
+                                                                {item.type
+                                                                    ? item.type
+                                                                        .charAt(0)
+                                                                        .toUpperCase() +
+                                                                    item.type.slice(1)
+                                                                    : "-"}
+                                                            </td>
                                                             <td>
                                                                 {item.type === "breast"
-                                                                    ? item.side || "-"
+                                                                    ? item.side
+                                                                        ? item.side
+                                                                            .charAt(0)
+                                                                            .toUpperCase() +
+                                                                        item.side.slice(
+                                                                            1
+                                                                        )
+                                                                        : "-"
                                                                     : item.amount
                                                                         ? `${item.amount} oz`
                                                                         : "-"}
                                                             </td>
                                                             <td>
                                                                 {item.startTime
-                                                                    ? new Date(item.startTime).toLocaleTimeString([], {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                    })
+                                                                    ? new Date(
+                                                                        item.startTime
+                                                                    ).toLocaleTimeString(
+                                                                        [],
+                                                                        {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        }
+                                                                    )
                                                                     : "-"}
                                                             </td>
                                                             <td>
                                                                 {item.endTime
-                                                                    ? new Date(item.endTime).toLocaleTimeString([], {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                    })
+                                                                    ? new Date(
+                                                                        item.endTime
+                                                                    ).toLocaleTimeString(
+                                                                        [],
+                                                                        {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        }
+                                                                    )
                                                                     : "-"}
                                                             </td>
                                                         </>
@@ -197,35 +239,58 @@ export default function HistoryPage() {
                                                     {/* Diapers */}
                                                     {typeKey === "diapers" && (
                                                         <>
-                                                            <td>{item.type}</td>
+                                                            <td>
+                                                                {item.type
+                                                                    ? item.type
+                                                                        .charAt(0)
+                                                                        .toUpperCase() +
+                                                                    item.type.slice(1)
+                                                                    : "-"}
+                                                            </td>
                                                             <td>
                                                                 {item.time
-                                                                    ? new Date(item.time).toLocaleTimeString([], {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                    })
+                                                                    ? new Date(
+                                                                        item.time
+                                                                    ).toLocaleTimeString(
+                                                                        [],
+                                                                        {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        }
+                                                                    )
                                                                     : "-"}
                                                             </td>
                                                         </>
                                                     )}
 
                                                     {/* Sleep / Belt */}
-                                                    {(typeKey === "sleep" || typeKey === "belt") && (
+                                                    {(typeKey === "sleep" ||
+                                                        typeKey === "belt") && (
                                                         <>
                                                             <td>
                                                                 {item.startTime
-                                                                    ? new Date(item.startTime).toLocaleTimeString([], {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                    })
+                                                                    ? new Date(
+                                                                        item.startTime
+                                                                    ).toLocaleTimeString(
+                                                                        [],
+                                                                        {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        }
+                                                                    )
                                                                     : "-"}
                                                             </td>
                                                             <td>
                                                                 {item.endTime
-                                                                    ? new Date(item.endTime).toLocaleTimeString([], {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                    })
+                                                                    ? new Date(
+                                                                        item.endTime
+                                                                    ).toLocaleTimeString(
+                                                                        [],
+                                                                        {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        }
+                                                                    )
                                                                     : "-"}
                                                             </td>
                                                         </>
@@ -244,7 +309,12 @@ export default function HistoryPage() {
                                                                 <li>
                                                                     <button
                                                                         className="dropdown-item"
-                                                                        onClick={() => handleEdit(item, typeKey)}
+                                                                        onClick={() =>
+                                                                            handleEdit(
+                                                                                item,
+                                                                                typeKey
+                                                                            )
+                                                                        }
                                                                     >
                                                                         Edit
                                                                     </button>
@@ -252,7 +322,12 @@ export default function HistoryPage() {
                                                                 <li>
                                                                     <button
                                                                         className="dropdown-item text-danger"
-                                                                        onClick={() => handleDelete(typeKey, item.id)}
+                                                                        onClick={() =>
+                                                                            handleDelete(
+                                                                                typeKey,
+                                                                                item.id
+                                                                            )
+                                                                        }
                                                                     >
                                                                         Delete
                                                                     </button>
@@ -267,7 +342,10 @@ export default function HistoryPage() {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={columns.length + 1} className="text-center text-muted">
+                                    <td
+                                        colSpan={columns.length + 1}
+                                        className="text-center text-muted"
+                                    >
                                         No records found
                                     </td>
                                 </tr>
@@ -278,6 +356,36 @@ export default function HistoryPage() {
                 </div>
             </div>
         );
+    };
+
+    const handleDelete = async (type, id) => {
+        const endpoint = `/api/${type}/${id}`;
+        const res = await fetch(endpoint, {method: "DELETE"});
+        if (res.ok) fetchAll();
+    };
+
+// ✅ Add here
+    const handleEdit = (record, typeKey) => {
+        setSelectedRecord({...record, _type: typeKey});
+        setSelectedType(typeKey);
+        setShowEdit(true);
+    };
+
+// ✅ Already have this one
+    const handleSave = async (data) => {
+        if (!selectedRecord || !selectedType) return;
+
+        const endpoint = `/api/${selectedType}/${selectedRecord.id}`;
+        const res = await fetch(endpoint, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data),
+        });
+
+        if (res.ok) {
+            setShowEdit(false);
+            fetchAll();
+        }
     };
 
     return (

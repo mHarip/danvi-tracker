@@ -1,25 +1,26 @@
 "use client";
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 
-export default function FeedingForm({onSave}) {
+export default function FeedingForm({ onSave }) {
     const [type, setType] = useState("breast");
-    const [amount, setAmount] = useState(""); // reused for both oz and side
-    const [side, setSide] = useState(""); // separate side state
+    const [amount, setAmount] = useState("");
+    const [side, setSide] = useState("");
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
-    const [alertMessage, setAlertMessage] = useState("");
+    const [message, setMessage] = useState(null);
+    const [variant, setVariant] = useState("success");
 
-    // Automatically set current date/time on load
+    // Automatically set current datetime
     useEffect(() => {
         const now = new Date();
         const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
             .toISOString()
-            .slice(0, 16); // format suitable for datetime-local
+            .slice(0, 16);
         setStartTime(localISO);
         setEndTime(localISO);
     }, []);
 
-    async function handleSubmit(e) {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const payload = {
@@ -33,7 +34,7 @@ export default function FeedingForm({onSave}) {
         try {
             const res = await fetch("/api/feedings", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
 
@@ -41,17 +42,14 @@ export default function FeedingForm({onSave}) {
                 const data = await res.json();
                 console.log("✅ Feeding saved:", data);
 
-                // Optional callback for parent
                 if (onSave) onSave(data);
 
-                // Show success alert
-                setAlertMessage("✅ Feeding saved successfully!");
+                setMessage("✅ Feeding logged");
+                setVariant("success");
 
-                // Reset only the amount field
+                // Reset fields
                 setAmount("");
                 setSide("");
-
-                // Reset to current time again
                 const now = new Date();
                 const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
                     .toISOString()
@@ -59,101 +57,105 @@ export default function FeedingForm({onSave}) {
                 setStartTime(localISO);
                 setEndTime(localISO);
 
-                // Hide alert automatically after 3 seconds
-                setTimeout(() => setAlertMessage(""), 3000);
+                setTimeout(() => setMessage(null), 5000);
             } else {
-                setAlertMessage("❌ Failed to save feeding. Try again.");
-                setTimeout(() => setAlertMessage(""), 3000);
-                console.error("❌ Failed to save feeding");
+                setMessage("❌ Failed to save feeding");
+                setVariant("danger");
+                setTimeout(() => setMessage(null), 5000);
             }
         } catch (error) {
             console.error("Error:", error);
-            setAlertMessage("❌ An unexpected error occurred.");
-            setTimeout(() => setAlertMessage(""), 3000);
+            setMessage("❌ An unexpected error occurred.");
+            setVariant("danger");
+            setTimeout(() => setMessage(null), 5000);
         }
-    }
+    };
 
     return (
-        <form onSubmit={handleSubmit} className="p-3 border rounded bg-light position-relative">
-            {alertMessage && (
-                <div
-                    className={`alert ${
-                        alertMessage.startsWith("❌") ? "alert-danger" : "alert-success"
-                    } text-center fw-bold`}
-                    role="alert"
-                >
-                    {alertMessage}
+        <>
+            {message && (
+                <div className={`alert alert-${variant}`} role="alert">
+                    {message}
                 </div>
             )}
 
-            <div className="mb-3">
-                <label className="form-label fw-bold">Feeding Type</label>
-                <select
-                    className="form-select"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                >
-                    <option value="breast">Breast</option>
-                    <option value="pumped">Pumped</option>
-                    <option value="formula">Formula</option>
-                </select>
+            <div className="card mb-4">
+                <div className="card-header fw-bold">Log Feeding</div>
+                <div className="card-body">
+                    <form onSubmit={handleSubmit} className="row g-3">
+                        <div className="col-md-6">
+                            <label className="form-label">Type</label>
+                            <select
+                                className="form-select"
+                                value={type}
+                                onChange={(e) => setType(e.target.value)}
+                                required
+                            >
+                                <option value="breast">Breast</option>
+                                <option value="pumped">Pumped</option>
+                                <option value="formula">Formula</option>
+                            </select>
+                        </div>
+
+                        {type === "breast" ? (
+                            <div className="col-md-6">
+                                <label className="form-label">Side</label>
+                                <select
+                                    className="form-select"
+                                    value={side}
+                                    onChange={(e) => setSide(e.target.value)}
+                                    required
+                                >
+                                    <option value="">Select side</option>
+                                    <option value="left">Left</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                        ) : (
+                            <div className="col-md-6">
+                                <label className="form-label">Amount (oz)</label>
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    step="0.1"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="Enter amount in oz"
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        <div className="col-md-6">
+                            <label className="form-label">Start Time</label>
+                            <input
+                                type="datetime-local"
+                                className="form-control"
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="col-md-6">
+                            <label className="form-label">End Time</label>
+                            <input
+                                type="datetime-local"
+                                className="form-control"
+                                value={endTime}
+                                onChange={(e) => setEndTime(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="col-12 d-flex justify-content-end">
+                            <button type="submit" className="btn btn-primary">
+                                Save Feeding
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            {type === "breast" ? (
-                <div className="mb-3">
-                    <label className="form-label fw-bold">Side</label>
-                    <select
-                        className="form-select"
-                        value={side}
-                        onChange={(e) => setSide(e.target.value)}
-                        required
-                    >
-                        <option value="">Select side</option>
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
-                    </select>
-                </div>
-            ) : (
-                <div className="mb-3">
-                    <label className="form-label fw-bold">Amount (oz)</label>
-                    <input
-                        type="number"
-                        className="form-control"
-                        step="0.1"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="Enter amount in oz"
-                        required
-                    />
-                </div>
-            )}
-
-            <div className="row">
-                <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Start Time</label>
-                    <input
-                        type="datetime-local"
-                        className="form-control"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        required
-                    />
-                </div>
-                <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">End Time</label>
-                    <input
-                        type="datetime-local"
-                        className="form-control"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        required
-                    />
-                </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary w-100 fw-bold">
-                Save Feeding
-            </button>
-        </form>
+        </>
     );
 }

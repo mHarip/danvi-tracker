@@ -1,7 +1,6 @@
 @import "bootstrap/scss/functions";
 @import "bootstrap/scss/bootstrap";
 
-// 🎨 Customize your theme here
 $primary: #012a52;
 $secondary: #00b2a9;
 $success: #a4d65e;
@@ -11,7 +10,6 @@ $dark: #1a1a1a;
 $primary-text-emphasis: #004080;
 $dark-secondary: $secondary;
 
-// Rounded corners & font
 $border-radius: 0.5rem;
 $font-family-sans-serif: 'Inter', sans-serif;
 
@@ -31,19 +29,8 @@ $font-family-sans-serif: 'Inter', sans-serif;
         color: $primary-text-emphasis;
       }
 
-      // Gradient underline effect
-      background: linear-gradient(
-                      to right, transparent
-      ),
-      linear-gradient(
-                      to right,
-                      #DA363B,
-                      #E0582E,
-                      #ECB841,
-                      #4A7638,
-                      #6E7491,
-                      #874194
-      );
+      background: linear-gradient(to right, transparent),
+      linear-gradient(to right, #DA363B, #E0582E, #ECB841, #4A7638, #6E7491, #874194);
       background-size: 100% 3px, 0 3px;
       background-position: 100% 100%, 0 100%;
       background-repeat: no-repeat;
@@ -61,7 +48,8 @@ $font-family-sans-serif: 'Inter', sans-serif;
     background-color: $secondary;
     color: white;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
       background-color: $primary;
       border-color: $secondary;
     }
@@ -85,7 +73,6 @@ $font-family-sans-serif: 'Inter', sans-serif;
 }
 
 .btn--quick-add {
-  //background: linear-gradient(90deg, #DA363B, #E0582E, #ECB841, #4A7638, #6E7491, #874194);
   background: $secondary;
   color: white;
   border: none;
@@ -117,22 +104,17 @@ $font-family-sans-serif: 'Inter', sans-serif;
       color: $white;
     }
 
-    // Feeding
     &:nth-child(2):hover {
       background-color: #6E7491;
     }
 
-    // Diaper
     &:nth-child(3):hover {
       background-color: #4A7638;
     }
 
-    // Sleep
     &:nth-child(4):hover {
       background-color: #E0582E;
     }
-
-    // Belt
   }
 }
 
@@ -197,8 +179,15 @@ $font-family-sans-serif: 'Inter', sans-serif;
 }
 
 .card-header {
+  padding: 0.75rem 1rem;
   background-color: #f8f9fa;
   border-bottom: 1px solid #e5e5e5;
+
+  strong {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
 }
 
 .card-body {
@@ -232,7 +221,6 @@ canvas {
   color: $secondary !important;
 }
 
-/* ===== Total Highlight Styling ===== */
 .total-highlight {
   background: linear-gradient(90deg, #e8f0ff, #dce8ff);
   padding: 3px 8px;
@@ -244,18 +232,16 @@ canvas {
   box-shadow: 0 1px 4px rgba(13, 71, 161, 0.2);
 }
 
-/* subtle hover animation for fun */
 .table-secondary:hover .total-highlight {
   background: linear-gradient(90deg, #dbeafe, #c7d2fe);
   box-shadow: 0 2px 6px rgba(13, 71, 161, 0.25);
   transition: all 0.2s ease-in-out;
 }
 
-/* ===== Compact Dropdown Width ===== */
 .actions-dropdown {
   .dropdown-menu {
-    min-width: auto !important; /* removes forced 10rem width */
-    width: 110px !important; /* custom narrow width */
+    min-width: auto !important;
+    width: 110px !important;
     padding: 4px 0 !important;
     border-radius: 6px !important;
     border: 1px solid #e5e7eb !important;
@@ -263,26 +249,22 @@ canvas {
     text-align: left;
   }
 
-  /* Compact dropdown items */
   .dropdown-item {
     padding: 4px 10px !important;
     font-size: 0.875rem !important;
     line-height: 1.2 !important;
   }
 
-  /* Edit */
   .dropdown-item:first-child {
     color: #0d47a1;
     font-weight: 600;
   }
 
-  /* Delete */
   .dropdown-item.text-danger {
     color: #dc3545 !important;
     font-weight: 600;
   }
 
-  /* Hover effects */
   .dropdown-item:hover {
     background-color: #d7d8da !important;
   }
@@ -295,4 +277,38 @@ canvas {
 
 .modal-header-bg {
   background-color: $secondary;
+}
+
+.filter-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+  padding-bottom: 4px;
+}
+
+.filter-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.filter-scroll::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.filter-scroll .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .card-header strong {
+    font-size: 1rem !important;
+  }
+
+  .filter-scroll {
+    margin-top: 0.25rem;
+  }
 }
