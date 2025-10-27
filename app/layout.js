@@ -6,8 +6,12 @@ import BootstrapClient from "@/components/BootstrapClient";
 import QuickAddModals from "@/components/QuickAddModals";
 
 export const metadata = {
-    title: "Baby Tracker",
-    description: "Track feedings, diapers, sleep, and belt usage",
+    title: "Danvi Tracker",
+    description: "Track baby feeding, sleep, and diapers.",
+    icons: {
+        icon: "/favicon.png",
+        apple: "/favicon.png",
+    },
 };
 
 
