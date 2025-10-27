@@ -17,29 +17,44 @@ $primary-text-emphasis: #002B50;
 $font-family-sans-serif: 'Inter', 'Segoe UI', sans-serif;
 $border-radius: 0.6rem;
 
+// === Utilities / Globals ===
+body {
+  font-family: $font-family-sans-serif;
+  color: $dark;
+  background-color: $light;
+}
+
+canvas {
+  max-height: 280px;
+}
+
+/* === Navbar === */
 .custom-navbar {
   background-color: $secondary;
-  color: white;
+  color: #fff;
 
   .navbar-nav {
     .nav-link {
-      color: white;
-
-      &.active {
-        //color: $primary-text-emphasis;
-        font-weight: bold;
-      }
-
+      color: #fff;
+      font-weight: 500;
+      position: relative;
+      // gradient underline effect
       background: linear-gradient(to right, transparent),
       linear-gradient(to right, #DA363B, #E0582E, #ECB841, #4A7638, #6E7491, #874194);
       background-size: 100% 3px, 0 3px;
       background-position: 100% 100%, 0 100%;
       background-repeat: no-repeat;
-      transition: background-size 400ms;
+      transition: background-size 400ms, color 200ms;
+      text-decoration: none;
+
+      &.active {
+        color: $warning;
+        font-weight: bold;
+      }
 
       &:hover {
         background-size: 0 3px, 100% 3px;
-        text-decoration: none;
+        color: $warning;
       }
     }
   }
@@ -47,7 +62,7 @@ $border-radius: 0.6rem;
   .navbar-toggler {
     border-color: $primary;
     background-color: $secondary;
-    color: white;
+    color: #fff;
 
     &:hover,
     &:focus {
@@ -57,10 +72,13 @@ $border-radius: 0.6rem;
   }
 }
 
-.btn-primary {
+/* === Buttons === */
+.btn-primary,
+.btn--quick-add {
   background-color: $primary !important;
   border-color: $primary !important;
   color: #fff !important;
+  transition: background-color 150ms, box-shadow 150ms;
 
   &:hover,
   &:focus,
@@ -68,57 +86,92 @@ $border-radius: 0.6rem;
   &.active,
   .show > &.dropdown-toggle {
     background-color: $secondary !important;
-    border-color: $secondary !important;
     color: #fff !important;
   }
 }
 
+/* Keep quick-add visual prominence */
 .btn--quick-add {
   background: $secondary;
-  color: white;
   border: none;
   font-weight: bold;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 
   &:hover {
     background: $primary;
-    color: white;
   }
 }
 
+.btn-secondary {
+  background-color: $secondary !important;
+  border-color: $secondary !important;
+  color: #fff !important;
+
+  &:hover {
+    background-color: darken($secondary, 8%) !important;
+  }
+}
+
+/* Handle dropdown-toggle active state for bootstrap show */
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+  background-color: $secondary !important;
+  border-color: $secondary !important;
+}
+
+/* === Dropdowns === */
 .dropdown-menu {
   border-radius: 0.5rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: .5rem 0;
 
   .dropdown-item {
     font-weight: 500;
     color: #012a52;
-    transition: background-color 0.3s, color 0.3s;
+    transition: background-color 0.2s, color 0.2s;
+    padding: .5rem 1rem;
 
     &:hover {
-      color: white;
+      color: #fff;
     }
 
+    // color-coded hover states for first few items
     &:nth-child(1):hover {
       background-color: $primary;
-      color: $white;
+      color: #fff;
     }
 
     &:nth-child(2):hover {
       background-color: #6E7491;
+      color: #fff;
     }
 
     &:nth-child(3):hover {
       background-color: #4A7638;
+      color: #fff;
     }
 
     &:nth-child(4):hover {
       background-color: #E0582E;
+      color: #fff;
     }
+  }
+
+  // Lightweight default hover for other items
+  .dropdown-item:not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)):hover {
+    background-color: #f1f5f9;
+    color: #000;
+  }
+
+  .dropdown-item.text-danger:hover {
+    background-color: #dc3545 !important;
+    color: #fff !important;
   }
 }
 
+/* === Form Elements === */
 .form-check-input {
   background-color: $primary;
   border-color: $primary;
@@ -134,6 +187,7 @@ $border-radius: 0.6rem;
   }
 }
 
+/* === Pagination === */
 .pagination {
   .page-link {
     color: $primary;
@@ -159,86 +213,48 @@ $border-radius: 0.6rem;
   }
 }
 
-.filter-buttons .btn {
-  border-radius: 0.4rem;
-  min-width: 2.5rem;
-}
-
-.filter-buttons .btn-primary {
-  background-color: #012a52;
-  border-color: #012a52;
-}
-
-.filter-buttons .btn-primary:hover {
-  background-color: #023a7a;
-  border-color: #023a7a;
-}
-
+/* === Cards & Tables === */
 .card {
+  background-color: #fff;
+  border-color: #E5E7EB;
+  border-bottom: 0;
   border-radius: 0.8rem;
-  border: 1px solid #e5e5e5;
-}
 
-.card-header {
-  padding: 0.75rem 1rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e5e5e5;
+  &-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e5e5;
 
-  strong {
-    line-height: 1;
-    display: flex;
-    align-items: center;
+    strong {
+      line-height: 1;
+      display: flex;
+      align-items: center;
+    }
   }
 }
 
-.card-body {
-  background-color: #fff;
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #EAF2F8 !important;
 }
 
-canvas {
-  max-height: 280px;
-}
-
-.dropdown-menu .dropdown-item {
-  transition: all 0.2s ease-in-out;
-  font-weight: 500;
-}
-
-.dropdown-menu .dropdown-item:hover {
-  background-color: #f1f5f9;
-  color: #000;
-}
-
-.dropdown-menu .dropdown-item.text-danger:hover {
-  background-color: #dc3545 !important;
-  color: #fff !important;
-}
-
-.text-primary {
-  color: $primary !important;
-}
-
-.text-secondary {
-  color: $secondary !important;
-}
-
+/* Total highlight (single consolidated style) */
 .total-highlight {
-  background: linear-gradient(90deg, #e8f0ff, #dce8ff);
-  padding: 3px 8px;
+  background: linear-gradient(90deg, #EAF2F8, #D6ECF5);
+  padding: 3px 10px;
   border-radius: 6px;
   font-weight: 700;
-  color: #0d47a1 !important;
+  color: $primary !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 1px 4px rgba(13, 71, 161, 0.2);
+  transition: all 0.2s ease-in-out;
 }
 
 .table-secondary:hover .total-highlight {
   background: linear-gradient(90deg, #dbeafe, #c7d2fe);
   box-shadow: 0 2px 6px rgba(13, 71, 161, 0.25);
-  transition: all 0.2s ease-in-out;
 }
 
+/* === Actions Dropdown (compact) === */
 .actions-dropdown {
   .dropdown-menu {
     min-width: auto !important;
@@ -272,30 +288,58 @@ canvas {
   }
 }
 
+/* === Modal === */
 .modal-header-bg {
   background-color: $secondary;
+  color: #fff;
+}
+
+/* === Filter / Scrollable buttons === */
+.filter-buttons .btn {
+  border-radius: 0.4rem;
+  min-width: 2.5rem;
+  white-space: nowrap;
+}
+
+.filter-buttons .btn-primary {
+  background-color: #012a52;
+  border-color: #012a52;
+}
+
+.filter-buttons .btn-primary:hover {
+  background-color: #023a7a;
+  border-color: #023a7a;
 }
 
 .filter-scroll {
   scrollbar-width: thin;
   scrollbar-color: #ccc transparent;
   padding-bottom: 4px;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+
+  .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 }
 
-.filter-scroll::-webkit-scrollbar {
-  height: 4px;
+/* === Misc === */
+.card-header strong {
+  line-height: 1;
 }
 
-.filter-scroll::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 10px;
-}
-
-.filter-scroll .btn {
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
+/* === Responsive === */
 @media (max-width: 768px) {
   .card-header {
     padding: 0.75rem 1rem !important;
@@ -310,28 +354,16 @@ canvas {
   }
 }
 
-
-// --- Buttons ---
-.btn-primary {
-  background-color: $primary !important;
-  border-color: $primary !important;
-  color: #fff !important;
-
-  &:hover, &:focus {
-    background-color: darken($primary, 7%) !important;
-  }
+/* === Utility text colors === */
+.text-primary {
+  color: $primary !important;
 }
 
-.btn-secondary {
-  background-color: $secondary !important;
-  border-color: $secondary !important;
-  color: #fff !important;
-
-  &:hover {
-    background-color: darken($secondary, 8%) !important;
-  }
+.text-secondary {
+  color: $secondary !important;
 }
 
+/* === Alerts === */
 .alert-success {
   background-color: rgba($success, 0.15);
   color: darken($success, 25%);
@@ -340,41 +372,4 @@ canvas {
 .alert-danger {
   background-color: rgba($danger, 0.15);
   color: darken($danger, 20%);
-}
-
-// --- Navbar ---
-.custom-navbar {
-  background-color: $secondary;
-  color: #fff;
-
-  .nav-link {
-    color: #fff;
-
-    &.active {
-      color: $warning;
-    }
-
-    &:hover {
-      color: $warning;
-    }
-  }
-}
-
-// --- Cards & Tables ---
-.card {
-  background-color: #fff;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.8rem;
-}
-
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: #EAF2F8 !important;
-}
-
-.total-highlight {
-  background: linear-gradient(90deg, #EAF2F8, #D6ECF5);
-  color: $primary;
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-weight: 700;
 }
