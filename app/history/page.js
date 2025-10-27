@@ -16,6 +16,15 @@ export default function HistoryPage() {
         belt: "1D",
     });
 
+    // Pagination state
+    const [page, setPage] = useState({
+        feedings: 1,
+        diapers: 1,
+        sleep: 1,
+        belt: 1,
+    });
+    const itemsPerPage = 5;
+
     const [showEdit, setShowEdit] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [selectedType, setSelectedType] = useState(null);
@@ -107,6 +116,17 @@ export default function HistoryPage() {
         const grouped = groupedByDate(data);
         const dates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
 
+        // Pagination
+        const totalPages = Math.ceil(dates.length / itemsPerPage);
+        const currentPage = page[typeKey] || 1;
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pagedDates = dates.slice(startIndex, endIndex);
+
+        const handlePageChange = (newPage) => {
+            setPage((prev) => ({ ...prev, [typeKey]: newPage }));
+        };
+
         return (
             <div className="col-lg-6">
                 <div className="card mb-4 shadow-sm border-0">
@@ -121,9 +141,10 @@ export default function HistoryPage() {
                                             ? "btn-primary"
                                             : "btn-outline-secondary"
                                     }`}
-                                    onClick={() =>
-                                        setFilters({...filters, [typeKey]: opt})
-                                    }
+                                    onClick={() => {
+                                        setFilters({ ...filters, [typeKey]: opt });
+                                        setPage({ ...page, [typeKey]: 1 });
+                                    }}
                                 >
                                     {opt}
                                 </button>
@@ -131,228 +152,231 @@ export default function HistoryPage() {
                         </div>
                     </div>
 
-                    <div className="table-responsive">
-                        <table className="table table-striped align-middle">
-                            <thead>
-                            <tr>
-                                {columns.map((col) => (
-                                    <th key={col}>{col}</th>
-                                ))}
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {dates.length > 0 ? (
-                                dates.map((date) => {
-                                    const dayRecords = grouped[date];
-                                    let totalLabel = "";
+                    <div className="accordion" id={`accordion-${typeKey}`}>
+                        {pagedDates.map((date, idx) => {
+                            const dayRecords = grouped[date];
+                            let totalLabel = "";
 
-                                    if (typeKey === "feedings") {
-                                        const totalOz = getDailyTotalOz(dayRecords);
-                                        if (totalOz > 0)
-                                            totalLabel = `TOTAL: ${totalOz} OZ`;
-                                    } else if (typeKey === "diapers") {
-                                        totalLabel = `TOTAL: ${getDailyTotalDiapers(
-                                            dayRecords
-                                        )}`;
-                                    } else if (typeKey === "sleep") {
-                                        totalLabel = `TOTAL: ${getDailyTotalSleep(
-                                            dayRecords
-                                        )} HRS`;
-                                    } else if (typeKey === "belt") {
-                                        totalLabel = `TOTAL: ${getDailyTotalBelt(
-                                            dayRecords
-                                        )} HRS`;
-                                    }
+                            if (typeKey === "feedings") {
+                                const totalOz = getDailyTotalOz(dayRecords);
+                                if (totalOz > 0) totalLabel = `TOTAL: ${totalOz} OZ`;
+                            } else if (typeKey === "diapers") {
+                                totalLabel = `TOTAL: ${getDailyTotalDiapers(dayRecords)}`;
+                            } else if (typeKey === "sleep") {
+                                totalLabel = `TOTAL: ${getDailyTotalSleep(dayRecords)} HRS`;
+                            } else if (typeKey === "belt") {
+                                totalLabel = `TOTAL: ${getDailyTotalBelt(dayRecords)} HRS`;
+                            }
 
-                                    return (
-                                        <React.Fragment key={date}>
-                                            {/* Group Header */}
-                                            <tr className="table-secondary fw-bold">
-                                                <td colSpan={columns.length + 1}>
-                                                    {date}
-                                                    {totalLabel && (
-                                                        <span
-                                                            className="ms-2 fw-bold text-primary total-highlight float-end">
+                            return (
+                                <div className="accordion-item" key={date}>
+                                    <h2 className="accordion-header" id={`heading-${typeKey}-${idx}`}>
+                                        <button
+                                            className={`accordion-button ${
+                                                idx === 0 ? "" : "collapsed"
+                                            } fw-bold bg-light`}
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target={`#collapse-${typeKey}-${idx}`}
+                                            aria-expanded={idx === 0 ? "true" : "false"}
+                                            aria-controls={`collapse-${typeKey}-${idx}`}
+                                        >
+                                            {date}
+                                            {totalLabel && (
+                                                <span
+                                                    className="ms-2 fw-bold text-primary total-highlight float-end">
                                                                 {totalLabel}
                                                             </span>
-                                                    )}
-                                                </td>
-                                            </tr>
+                                            )}
+                                        </button>
+                                    </h2>
 
-                                            {dayRecords.map((item) => (
-                                                <tr key={item.id}>
-                                                    {/* Feedings */}
-                                                    {typeKey === "feedings" && (
-                                                        <>
-                                                            <td>
-                                                                {item.type
-                                                                    ? item.type
-                                                                        .charAt(0)
-                                                                        .toUpperCase() +
-                                                                    item.type.slice(1)
-                                                                    : "-"}
-                                                            </td>
-                                                            <td>
-                                                                {item.type === "breast"
-                                                                    ? item.side
-                                                                        ? item.side
-                                                                            .charAt(0)
-                                                                            .toUpperCase() +
-                                                                        item.side.slice(
-                                                                            1
-                                                                        )
-                                                                        : "-"
-                                                                    : item.amount
-                                                                        ? `${item.amount} oz`
-                                                                        : "-"}
-                                                            </td>
-                                                            <td>
-                                                                {item.startTime
-                                                                    ? new Date(
-                                                                        item.startTime
-                                                                    ).toLocaleTimeString(
-                                                                        [],
-                                                                        {
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                        }
-                                                                    )
-                                                                    : "-"}
-                                                            </td>
-                                                            <td>
-                                                                {item.endTime
-                                                                    ? new Date(
-                                                                        item.endTime
-                                                                    ).toLocaleTimeString(
-                                                                        [],
-                                                                        {
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                        }
-                                                                    )
-                                                                    : "-"}
-                                                            </td>
-                                                        </>
-                                                    )}
-
-                                                    {/* Diapers */}
-                                                    {typeKey === "diapers" && (
-                                                        <>
-                                                            <td>
-                                                                {item.type
-                                                                    ? item.type
-                                                                        .charAt(0)
-                                                                        .toUpperCase() +
-                                                                    item.type.slice(1)
-                                                                    : "-"}
-                                                            </td>
-                                                            <td>
-                                                                {item.time
-                                                                    ? new Date(
-                                                                        item.time
-                                                                    ).toLocaleTimeString(
-                                                                        [],
-                                                                        {
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                        }
-                                                                    )
-                                                                    : "-"}
-                                                            </td>
-                                                        </>
-                                                    )}
-
-                                                    {/* Sleep / Belt */}
-                                                    {(typeKey === "sleep" ||
-                                                        typeKey === "belt") && (
-                                                        <>
-                                                            <td>
-                                                                {item.startTime
-                                                                    ? new Date(
-                                                                        item.startTime
-                                                                    ).toLocaleTimeString(
-                                                                        [],
-                                                                        {
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                        }
-                                                                    )
-                                                                    : "-"}
-                                                            </td>
-                                                            <td>
-                                                                {item.endTime
-                                                                    ? new Date(
-                                                                        item.endTime
-                                                                    ).toLocaleTimeString(
-                                                                        [],
-                                                                        {
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                        }
-                                                                    )
-                                                                    : "-"}
-                                                            </td>
-                                                        </>
-                                                    )}
-
-                                                    {/* Actions */}
-                                                    <td className="actions-dropdown">
-                                                        <div className="dropdown">
-                                                            <button
-                                                                className="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                                data-bs-toggle="dropdown"
-                                                            >
-                                                                Actions
-                                                            </button>
-                                                            <ul className="dropdown-menu">
-                                                                <li>
-                                                                    <button
-                                                                        className="dropdown-item"
-                                                                        onClick={() =>
-                                                                            handleEdit(
-                                                                                item,
-                                                                                typeKey
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Edit
-                                                                    </button>
-                                                                </li>
-                                                                <li>
-                                                                    <button
-                                                                        className="dropdown-item text-danger"
-                                                                        onClick={() =>
-                                                                            handleDelete(
-                                                                                typeKey,
-                                                                                item.id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Delete
-                                                                    </button>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </React.Fragment>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan={columns.length + 1}
-                                        className="text-center text-muted"
+                                    <div
+                                        id={`collapse-${typeKey}-${idx}`}
+                                        className={`accordion-collapse collapse ${
+                                            idx === 0 ? "show" : ""
+                                        }`}
+                                        aria-labelledby={`heading-${typeKey}-${idx}`}
+                                        data-bs-parent={`#accordion-${typeKey}`}
                                     >
-                                        No records found
-                                    </td>
-                                </tr>
-                            )}
-                            </tbody>
-                        </table>
+                                        <div className="accordion-body p-0">
+                                            <table className="table table-striped mb-0 align-middle">
+                                                <thead className="table-light">
+                                                <tr>
+                                                    {columns.map((col) => (
+                                                        <th key={col}>{col}</th>
+                                                    ))}
+                                                    <th>Actions</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {dayRecords.map((item) => (
+                                                    <tr key={item.id}>
+                                                        {/* Feedings */}
+                                                        {typeKey === "feedings" && (
+                                                            <>
+                                                                <td>
+                                                                    {item.type
+                                                                        ? item.type.charAt(0).toUpperCase() +
+                                                                        item.type.slice(1)
+                                                                        : "-"}
+                                                                </td>
+                                                                <td>
+                                                                    {item.type === "breast"
+                                                                        ? item.side
+                                                                            ? item.side.charAt(0).toUpperCase() +
+                                                                            item.side.slice(1)
+                                                                            : "-"
+                                                                        : item.amount
+                                                                            ? `${item.amount} oz`
+                                                                            : "-"}
+                                                                </td>
+                                                                <td>
+                                                                    {item.startTime
+                                                                        ? new Date(
+                                                                            item.startTime
+                                                                        ).toLocaleTimeString([], {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        })
+                                                                        : "-"}
+                                                                </td>
+                                                                <td>
+                                                                    {item.endTime
+                                                                        ? new Date(item.endTime).toLocaleTimeString(
+                                                                            [],
+                                                                            {
+                                                                                hour: "2-digit",
+                                                                                minute: "2-digit",
+                                                                            }
+                                                                        )
+                                                                        : "-"}
+                                                                </td>
+                                                            </>
+                                                        )}
+
+                                                        {/* Diapers */}
+                                                        {typeKey === "diapers" && (
+                                                            <>
+                                                                <td>
+                                                                    {item.type
+                                                                        ? item.type.charAt(0).toUpperCase() +
+                                                                        item.type.slice(1)
+                                                                        : "-"}
+                                                                </td>
+                                                                <td>
+                                                                    {item.time
+                                                                        ? new Date(item.time).toLocaleTimeString(
+                                                                            [],
+                                                                            {
+                                                                                hour: "2-digit",
+                                                                                minute: "2-digit",
+                                                                            }
+                                                                        )
+                                                                        : "-"}
+                                                                </td>
+                                                            </>
+                                                        )}
+
+                                                        {/* Sleep / Belt */}
+                                                        {(typeKey === "sleep" || typeKey === "belt") && (
+                                                            <>
+                                                                <td>
+                                                                    {item.startTime
+                                                                        ? new Date(
+                                                                            item.startTime
+                                                                        ).toLocaleTimeString([], {
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                        })
+                                                                        : "-"}
+                                                                </td>
+                                                                <td>
+                                                                    {item.endTime
+                                                                        ? new Date(item.endTime).toLocaleTimeString(
+                                                                            [],
+                                                                            {
+                                                                                hour: "2-digit",
+                                                                                minute: "2-digit",
+                                                                            }
+                                                                        )
+                                                                        : "-"}
+                                                                </td>
+                                                            </>
+                                                        )}
+
+                                                        {/* Actions */}
+                                                        <td className="actions-dropdown">
+                                                            <div className="dropdown">
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                                    data-bs-toggle="dropdown"
+                                                                    aria-label="Actions"
+                                                                >
+                                                                    <img
+                                                                        src="/edit.png"
+                                                                        alt="Actions"
+                                                                        width={18}
+                                                                        height={18}
+                                                                    />
+                                                                </button>
+                                                                <ul className="dropdown-menu">
+                                                                    <li>
+                                                                        <button
+                                                                            className="dropdown-item"
+                                                                            onClick={() =>
+                                                                                handleEdit(item, typeKey)
+                                                                            }
+                                                                        >
+                                                                            Edit
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button
+                                                                            className="dropdown-item text-danger"
+                                                                            onClick={() =>
+                                                                                handleDelete(typeKey, item.id)
+                                                                            }
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="d-flex justify-content-center align-items-center gap-2 p-3 border-top">
+                            <button
+                                className="btn btn-sm btn-outline-primary"
+                                disabled={currentPage === 1}
+                                onClick={() => handlePageChange(currentPage - 1)}
+                            >
+                                ← Prev
+                            </button>
+                            <span className="fw-semibold">
+              Page {currentPage} of {totalPages}
+            </span>
+                            <button
+                                className="btn btn-sm btn-outline-primary"
+                                disabled={currentPage === totalPages}
+                                onClick={() => handlePageChange(currentPage + 1)}
+                            >
+                                Next →
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );

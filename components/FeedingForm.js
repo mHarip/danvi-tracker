@@ -40,7 +40,6 @@ export default function FeedingForm({ onSave }) {
 
             if (res.ok) {
                 const data = await res.json();
-                console.log("✅ Feeding saved:", data);
 
                 if (onSave) onSave(data);
 
