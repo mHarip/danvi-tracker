@@ -6,7 +6,7 @@ $primary: #003A6D;
 $secondary: #008C8C;
 $info: #1BA1E2;
 $success: #3C9A3C;
-$warning: #C98A00;
+$warning: #FFAF00;
 $danger: #B23A48;
 $dark: #1A1A1A;
 $light: #F9FAFB;
@@ -26,7 +26,8 @@ $border-radius: 0.6rem;
       color: white;
 
       &.active {
-        color: $primary-text-emphasis;
+        //color: $primary-text-emphasis;
+        font-weight: bold;
       }
 
       background: linear-gradient(to right, transparent),
@@ -315,6 +316,7 @@ canvas {
   background-color: $primary !important;
   border-color: $primary !important;
   color: #fff !important;
+
   &:hover, &:focus {
     background-color: darken($primary, 7%) !important;
   }
@@ -324,6 +326,7 @@ canvas {
   background-color: $secondary !important;
   border-color: $secondary !important;
   color: #fff !important;
+
   &:hover {
     background-color: darken($secondary, 8%) !important;
   }
@@ -343,10 +346,17 @@ canvas {
 .custom-navbar {
   background-color: $secondary;
   color: #fff;
+
   .nav-link {
     color: #fff;
-    &.active { color: $warning; }
-    &:hover { color: $info; text-decoration: underline; }
+
+    &.active {
+      color: $warning;
+    }
+
+    &:hover {
+      color: $warning;
+    }
   }
 }
 

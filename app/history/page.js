@@ -10,10 +10,10 @@ export default function HistoryPage() {
     const [belt, setBelt] = useState([]);
 
     const [filters, setFilters] = useState({
-        feedings: "1D",
-        diapers: "1D",
-        sleep: "1D",
-        belt: "1D",
+        feedings: "1W",
+        diapers: "1W",
+        sleep: "1W",
+        belt: "1W",
     });
 
     // Pagination state
